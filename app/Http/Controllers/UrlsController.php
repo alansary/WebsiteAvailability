@@ -8,6 +8,7 @@ use App\Url;
 use Validator;
 use JWTAuth;
 use App\DownLog;
+use App\Http\Helpers\Utilities;
 
 class UrlsController extends Controller
 {
@@ -26,7 +27,7 @@ class UrlsController extends Controller
 		$urls = $user->urls;
 		foreach ($urls as $url) {
 	        // update the status of the URL
-	        $is_active = $this->curlInit($url->url);
+	        $is_active = Utilities::curlInit($url->url);
 
 	        $url->is_active = ($is_active) ? 1 : 0;
 	        $url->save();
@@ -86,7 +87,7 @@ class UrlsController extends Controller
         	return response()->json(['errors' => ['URL/App already exists']], 401);
         }
         // check if url is up or down
-        $is_active = $this->curlInit($input['url']);
+        $is_active = Utilities::curlInit($input['url']);
 
         $url = Url::create([
         	'url' => $input['url'],
@@ -149,7 +150,7 @@ class UrlsController extends Controller
         }
 
         // update the status of the URL
-        $is_active = $this->curlInit($url->url);
+        $is_active = Utilities::curlInit($url->url);
 
         $url->is_active = ($is_active) ? 1 : 0;
         $url->save();
@@ -274,7 +275,7 @@ class UrlsController extends Controller
         DownLog::where('url_id', '=', $url->id)->delete();
 
         // check if url is up or down
-        $is_active = $this->curlInit($input['url']);
+        $is_active = Utilities::curlInit($input['url']);
 
         // updating the url
         $url->url = $input['url'];
@@ -295,29 +296,5 @@ class UrlsController extends Controller
 			->toArray()['data'];
 
 		return response()->json(['url' => $url], 200);
-	}
-
-	/**
-	 * function to check if a URL is up or down
-	 *
-	 * @param  string $domain URL to check if up or down
-	 * @return bool           returns the active status of the URL
-	 */
-	protected function curlInit($domain)
-	{
-	   $curlInit = curl_init($domain);
-	   curl_setopt($curlInit,CURLOPT_CONNECTTIMEOUT,10);
-	   curl_setopt($curlInit,CURLOPT_HEADER,true);
-	   curl_setopt($curlInit,CURLOPT_NOBODY,true);
-	   curl_setopt($curlInit,CURLOPT_RETURNTRANSFER,true);
-
-	   // get response
-	   $response = curl_exec($curlInit);
-
-	   // closing the connection
-	   curl_close($curlInit);
-
-	   // return the response
-	   return ($response) ? true : false;
 	}
 }
