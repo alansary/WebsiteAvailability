@@ -17,4 +17,13 @@ Route::group(['prefix' => 'v1'], function() {
 	// User registration and authentication
 	Route::post('login', 'UsersController@login');
 	Route::post('register', 'UsersController@register');
+
+	// URL routes
+	Route::group(['prefix' => 'urls', 'middleware' => ['jwt.auth']], function() {
+		Route::get('/all', 'UrlsController@getAllUserUrls');
+		Route::post('/', 'UrlsController@store');
+		Route::get('/', 'UrlsController@getUrlById');
+		Route::delete('/', 'UrlsController@destroy');
+		Route::patch('/', 'UrlsController@update');
+	});
 });
