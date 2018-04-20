@@ -81,6 +81,8 @@ class CheckStatus extends Command
                 $this->error('URL not found');
             }
 
+            $user = $url->user;
+
             // check the url and update its status
             $messages = collect();
             $message = $this->checkUrl($url);
@@ -101,6 +103,8 @@ class CheckStatus extends Command
         } else {
             // check all the urls in the system
             $users = User::all();
+            $success_mails = collect();
+            $failure_mails = collect();
             foreach ($users as $user) {
                 // check user urls and update their statuses
                 $urls = $user->urls;
@@ -113,18 +117,16 @@ class CheckStatus extends Command
                 }
 
                 // Send status mail if website is down or website was down then becomes up
-                $success_mails = collect();
-                $failure_mails = collect();
                 if (count($messages)) {
                     if ($this->sendReport($user, $messages)) {
-                        $success_mails->push('Report sent successfully to '.$user->username);
+                        $success_mails->push(['message' => 'Report sent successfully to '.$user->username]);
                     } else {
-                        $failure_mails->push('Error occured while sending the report to '.$user->username);
+                        $failure_mails->push(['message' => 'Error occured while sending the report to '.$user->username]);
                     }
                 }
             }
-            $this->table(['Errors'], $failure_mails);
-            $this->table(['Success'], $success_mails);
+            $this->table(['Errors'], $failure_mails->toArray());
+            $this->table(['Success'], $success_mails->toArray());
         }
     }
 
@@ -167,7 +169,7 @@ class CheckStatus extends Command
             if ($num_weeks < 1) {
                 $num_weeks = 0;
             }
-            $messages = [
+            $message = [
                 'message' => 'The url/app "'.$url->url.'" is now up, it was down for '.$num_weeks.' week(s), '.$num_days.' day(s), '.$num_hours.' hour(s), '.$num_minutes.' minute(s) and '.$num_seconds.' second.',
                 'type' => true
             ];
@@ -231,13 +233,17 @@ class CheckStatus extends Command
      */
     protected function sendReport(User $user, $messages) {
         $data = ['user' => $user, 'messages' => $messages];
-        Mail::send(['html'=>'emails.userURLReport'], $data, function($message) use ($user) {
-         $message
-            ->to($user->email, $user->username)
-            ->subject('Website Availability Status Report');
-         $message
-            ->from('mohamed_alansary@rocketmail.com',config('app.name'));
-        });
+        try {
+            Mail::send(['html'=>'emails.userURLReport'], $data, function($message) use ($user) {
+             $message
+                ->to($user->email, $user->username)
+                ->subject('Website Availability Status Report');
+             $message
+                ->from('mohamed_alansary@rocketmail.com',config('app.name'));
+            });
+        } catch (\Exception $e) {
+            return false;
+        }
 
         // check for failures
         if (Mail::failures()) {

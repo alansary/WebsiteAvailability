@@ -419,19 +419,17 @@
                               <tr>
                                 <td align="left">
                                   <table border="0" cellspacing="0" cellpadding="0">
-                                    @if (count($messages))
+                                    @foreach ($messages as $message)
                                     <tr>
-                                      @foreach ($messages as $message)
                                         <td>
                                           @if ($message['type'])
-                                            <p class="success">{{$message['message']}}</p>
+                                            <p class="alert-success">{{$message['message']}}</p>
                                           @else
-                                            <p class="error">{{$message['message']}}</p>
+                                            <p class="alert-danger">{{$message['message']}}</p>
                                           @endif                                        
                                         </td>
-                                      @endforeach
                                     </tr>
-                                    @endif
+                                    @endforeach
                                   </table>
                                 </td>
                               </tr>
