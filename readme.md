@@ -190,10 +190,10 @@ api/v1/urls/all -- GET
 ```json
 {
     "errors": [
-		'error #1',
-		'error #2',
-		'error #3',
-		'........'
+		"error #1",
+		"error #2",
+		"error #3",
+		"........"
     ]
 }
 ```
