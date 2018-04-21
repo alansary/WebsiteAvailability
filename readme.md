@@ -232,3 +232,25 @@ This argument send messages to only the owner of this url in case on of the abov
 
 #### Postman collection is attached with the project, don't forgot to change the base url or create a virtual environment with the same name on your local host.
 #### You can use mailtrap to test sending mails
+
+
+----
+## Sample Email:
+----
+
+Hi alansary,
+
+Your report for the urls/apps availability is as follows:
+
+The url/app "http://www.test.com" is now up, it was down for 0 week(s), 0 day(s), 0 hour(s), 0 minute(s) and 10 second.
+
+The url/app "http://www.test2.com" is still down, it is down since 0 week(s), 0 day(s), 1 hour(s), 32 minute(s) and 44 second.
+
+The url/app "http://www.facebook.com" is now up, it was down for 0 week(s), 0 day(s), 0 hour(s), 0 minute(s) and 19 second.
+
+Thanks,
+The Website Availability App Team
+
+© 2018 WebsiteAvailabilityApp. All rights reserved.
+
+WebsiteAvailabilityApp, LLC
