@@ -40,9 +40,15 @@ $ php artisan key:generate
 ```
 
 **5-** Generate JWT Secret and place it in .env like JWT_SECRET=Your-Secret-Key and replace it in config/jwt.
-
+First open vendor/tymon/jwt-auth/src/Commands/JWTGenerateCommand.php and add the following function
+```php
+    public function handle() { 
+        $this->fire();
+    }
+```
+Then generate the key
 ```bash
-$ php artisan jwt:secret
+$ php artisan jwt:geberate
 ```
 ```php
 'secret' => env('JWT_SECRET', 'Your-Secret-Key'),
