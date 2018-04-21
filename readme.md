@@ -48,7 +48,7 @@ First open vendor/tymon/jwt-auth/src/Commands/JWTGenerateCommand.php and add the
 ```
 Then generate the key
 ```bash
-$ php artisan jwt:geberate
+$ php artisan jwt:generate
 ```
 ```php
 'secret' => env('JWT_SECRET', 'Your-Secret-Key'),
