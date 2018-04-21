@@ -30,6 +30,10 @@ $ composer update
 
 **3-** Create the database and change the credentials and the name of the database in .env file.
 
+```bash
+$ cp .env.example .env
+```
+
 **4-** Run the following command to generate the secret key and place the secret key in config/app.
 
 ```bash
@@ -52,6 +56,16 @@ $ php artisan jwt:generate
 ```
 ```php
 'secret' => env('JWT_SECRET', 'Your-Secret-Key'),
+```
+
+**6-** Migrate the database
+```bash
+$ php artisan migrate
+```
+
+**7-** Run the project
+```bash
+$ php artisan serve
 ```
 
 ----
@@ -238,6 +252,11 @@ This argument send messages to only the owner of this url in case on of the abov
 
 #### Postman collection is attached with the project, don't forgot to change the base url or create a virtual environment with the same name on your local host.
 #### You can use mailtrap to test sending mails
+#### In order to test the down mails, you can disconnect from the network and send API call to get a url or user urls and it will automatically update the url(s) status to be false, then connect to the network and try from your command line
+```bash
+$ php artisan CheckStatus
+```
+#### And it will send the email with the down time
 
 
 ----
