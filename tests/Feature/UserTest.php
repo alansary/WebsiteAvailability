@@ -12,11 +12,11 @@ use JWTAuth;
 class UserTest extends TestCase
 {
     /**
-     * Registering a user test.
+     * Create fake user data.
      *
-     * @return void
+     * @return array
      */
-    public function testRegisterUser()
+    protected function createFakeUserData()
     {
         $faker = Faker::create();
         $username = $faker->name;
@@ -24,18 +24,37 @@ class UserTest extends TestCase
         $password = str_random(10);
         $hashed_password = Hash::make($password);
 
+        return [
+            'username' => $username,
+            'email' => $email,
+            'password' => $password,
+            'hashed_password' => $hashed_password
+        ];
+    }
+
+    /**
+     * Registering a user test.
+     *
+     * @return string password
+     */
+    public function testRegisterUser()
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+
+        // sending the request and test status and json response
         $response = $this->json('POST', '/api/v1/register', [
-                'username' => $username,
-                'email' => $email,
-                'password' => $hashed_password,
-                'password_confirmation' => $hashed_password
+                'username' => $user_data['username'],
+                'email' => $user_data['email'],
+                'password' => $user_data['password'],
+                'password_confirmation' => $user_data['password']
             ])
             ->assertStatus(200)
             ->assertJson([
                 'user' => [
                     'id' => User::latest()->first()->id,
-                    'username' => $username,
-                    'email' => $email
+                    'username' => $user_data['username'],
+                    'email' => $user_data['email']
                 ]
             ])
             ->assertJsonStructure([
@@ -46,7 +65,9 @@ class UserTest extends TestCase
                 ],
                 'token'
             ]);
-        return $hashed_password;
+
+        // return password to test login
+        return $user_data['password'];
     }
 
     /**
@@ -54,8 +75,10 @@ class UserTest extends TestCase
      */
     public function testLoginUser($password)
     {
+        // get the last registered user
         $user = User::latest()->first();
 
+        // send login request and test status and json response
         $response = $this->json('POST', '/api/v1/login', [
                 'username' => $user->username,
                 'password' => $password
@@ -75,6 +98,178 @@ class UserTest extends TestCase
                     'email'
                 ],
                 'token'
+            ]);
+    }
+
+    /**
+     * Registering a user with missing data test.
+     *
+     * @return void
+     */
+    public function testRegisterUserWithDataMissing()
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+
+        // Missing username
+        $response = $this->json('POST', '/api/v1/register', [
+                'email' => $user_data['email'],
+                'password' => $user_data['password'],
+                'password_confirmation' => $user_data['password']
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // Missing email
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'password' => $user_data['password'],
+                'password_confirmation' => $user_data['password']
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // Missing password
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'email' => $user_data['email'],
+                'password_confirmation' => $user_data['password']
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // Missing password_confirmation
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'email' => $user_data['email'],
+                'password' => $user_data['password']
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * Registering a user with invalid data test.
+     *
+     * @return void
+     */
+    public function testRegisterUserWithInvalidData()
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+
+        // Invalid username
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => 1234,
+                'email' => $user_data['email'],
+                'password' => $user_data['password'],
+                'password_confirmation' => $user_data['password']
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // Invalid email
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'email' => $user_data['username'],
+                'password' => $user_data['password'],
+                'password_confirmation' => $user_data['password']
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // Invalid password
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'email' => $user_data['username'],
+                'password' => '1234',
+                'password_confirmation' => '1234'
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * Registering a user with non matching password test.
+     *
+     * @return void
+     */
+    public function testRegisterUserWithNonMatchingPassword()
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'email' => $user_data['email'],
+                'password' => $user_data['password'],
+                'password_confirmation' => '123456'
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * Registering a user with an email that exist test.
+     *
+     * @return void
+     */
+    public function testRegisterUserWithAnEmailThatExist()
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+        // getting the last created user
+        $user = User::latest()->first();
+
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user_data['username'],
+                'email' => $user->email,
+                'password' => $user_data['password'],
+                'password_confirmation' => '123456'
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * Registering a user with a username that exist test.
+     *
+     * @return void
+     */
+    public function testRegisterUserWithAUsernameThatExist()
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+        // getting the last created user
+        $user = User::latest()->first();
+
+        $response = $this->json('POST', '/api/v1/register', [
+                'username' => $user->username,
+                'email' => $user_data['email'],
+                'password' => $user_data['password'],
+                'password_confirmation' => '123456'
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
             ]);
     }
 }
