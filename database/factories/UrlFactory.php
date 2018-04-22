@@ -13,11 +13,12 @@ use Faker\Generator as Faker;
 |
 */
 
-$factory->define(App\User::class, function (Faker $faker) {
-	$password = \Hash::make(str_random(10));
+$factory->define(App\Url::class, function (Faker $faker) {
     return [
-        'username' => $faker->name,
-        'email' => $faker->unique()->safeEmail,
-        'password' => \Hash::make(str_random(10))
+        'url' => $faker->url,
+        'user_id' => function () {
+            return App\User::pluck('id')->random() ?: factory(App\User::class)->create()->id;
+        },
+        'is_active' => array_rand(array(0, 1))
     ];
 });
