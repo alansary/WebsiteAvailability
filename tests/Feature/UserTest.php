@@ -71,6 +71,9 @@ class UserTest extends TestCase
     }
 
     /**
+     * Login a user test.
+     * 
+     * @return void
      * @depends testRegisterUser
      */
     public function testLoginUser($password)
@@ -98,6 +101,91 @@ class UserTest extends TestCase
                     'email'
                 ],
                 'token'
+            ]);
+    }
+
+    /**
+     * Login a user with missing data test.
+     *
+     * @return void
+     * @depends testRegisterUser
+     */
+    public function testLoginUserWithDataMissing($password)
+    {
+        // get the last registered user
+        $user = User::latest()->first();
+
+        // missing username
+        $response = $this->json('POST', '/api/v1/login', [
+                'password' => $user->password
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // missing password
+        $response = $this->json('POST', '/api/v1/login', [
+                'username' => $user->username
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * Login a user with invalid data test.
+     *
+     * @return void
+     * @depends testRegisterUser
+     */
+    public function testLoginUserWithInvalidData($password)
+    {
+        // create fake data to register a user
+        $user_data = $this->createFakeUserData();
+
+        // get the last registered user
+        $user = User::latest()->first();
+
+        // unauthorized user
+        $response = $this->json('POST', '/api/v1/login', [
+                'username' => $user_data['username'],
+                'password' => $password
+            ])
+            ->assertStatus(401)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // invalid username
+        $response = $this->json('POST', '/api/v1/login', [
+                'username' => '',
+                'password' => $password
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // unauthorized user
+        $response = $this->json('POST', '/api/v1/login', [
+                'username' => $user->username,
+                'password' => '123456'
+            ])
+            ->assertStatus(401)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // invalid password
+        $response = $this->json('POST', '/api/v1/login', [
+                'username' => $user->username,
+                'password' => ''
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
             ]);
     }
 
