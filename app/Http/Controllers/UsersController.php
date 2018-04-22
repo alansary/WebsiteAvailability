@@ -94,7 +94,7 @@ class UsersController extends Controller
 		    }
 		} catch (JWTException $e) {
 		    // something went wrong
-		    return response()->json(['errors' => [$e->getMessage()]], 500);
+		    return response()->json(['errors' => [$e->getMessage()]], 400);
 		}
 		$user = JWTAuth::toUser($token);
 

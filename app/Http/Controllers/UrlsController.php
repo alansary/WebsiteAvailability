@@ -84,7 +84,7 @@ class UrlsController extends Controller
 
         // check if the url already exists
         if (Url::where('url', '=', $input['url'])->where('user_id', '=', $user->id)->get()->count()) {
-        	return response()->json(['errors' => ['URL/App already exists']], 401);
+        	return response()->json(['errors' => ['URL/App already exists']], 400);
         }
         // check if url is up or down
         $is_active = Utilities::curlInit($input['url']);
@@ -141,12 +141,12 @@ class UrlsController extends Controller
         try {
         	$url = Url::findOrFail($input['id']);
         } catch (\Exception $e) {
-        	return response()->json(['errors' => ['URL not found']], 401);
+        	return response()->json(['errors' => ['URL not found']], 400);
         }
 
         // check if the url belongs to the request user
         if ($url->user_id != $user->id) {
-        	return response()->json(['errors' => ['Unauthorized']], 500);
+        	return response()->json(['errors' => ['Unauthorized']], 401);
         }
 
         // update the status of the URL
@@ -208,12 +208,12 @@ class UrlsController extends Controller
         try {
         	$url = Url::findOrFail($input['id']);
         } catch (\Exception $e) {
-        	return response()->json(['errors' => ['URL not found']], 401);
+        	return response()->json(['errors' => ['URL not found']], 400);
         }
 
         // check if the url belongs to the request user
         if ($url->user_id != $user->id) {
-        	return response()->json(['errors' => ['Unauthorized']], 500);
+        	return response()->json(['errors' => ['Unauthorized']], 401);
         }
 
     	// deleting the down log if any
@@ -258,17 +258,17 @@ class UrlsController extends Controller
         try {
         	$url = Url::findOrFail($input['id']);
         } catch (\Exception $e) {
-        	return response()->json(['errors' => ['URL not found']], 401);
+        	return response()->json(['errors' => ['URL not found']], 400);
         }
 
         // check if the url belongs to the request user
         if ($url->user_id != $user->id) {
-        	return response()->json(['errors' => ['Unauthorized']], 500);
+        	return response()->json(['errors' => ['Unauthorized']], 401);
         }
 
         // check if the url already exists
         if (Url::where('url', '=', $input['url'])->where('user_id', '=', $user->id)->get()->count()) {
-        	return response()->json(['errors' => ['URL/App already exists']], 401);
+        	return response()->json(['errors' => ['URL/App already exists']], 400);
         }
 
         // removing the down log of the old url if exists
