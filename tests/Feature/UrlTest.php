@@ -335,4 +335,76 @@ class UrlTest extends TestCase
                 'errors'
             ]);
     }
+
+    /**
+     * get all urls of unauthenticated user test.
+     *
+     * @return void
+     */
+    public function testGetAllUrlsWithUnauthenticatedUser()
+    {
+        // get the urls
+        $response = $this->json('GET', '/api/v1/urls/all')
+            ->assertStatus(400)
+            ->assertJson([
+                'error' => 'token_not_provided'
+            ])
+            ->assertJsonStructure([
+                'error'
+            ]);
+    }
+
+    /**
+     * create a url for latest user test.
+     *
+     * @return integer
+     */
+    public function testCreateUrlForLatestUser()
+    {
+        $user = User::latest()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // creating a url for the first user
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('POST', '/api/v1/urls/', [
+                'url' => $faker->url
+            ])
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'url' => [
+                    'id',
+                    'url'
+                ]
+            ]);
+    }
+
+    /**
+     * get all urls of authenticated user test.
+     *
+     * @return void
+     * @depends testCreateUrlForLatestUser
+     */
+    public function testGetAllUrlsWithAuthenticatedUser()
+    {
+        // get the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. JWTAuth::fromUser(User::latest()->first()),
+            ])
+            ->json('GET', '/api/v1/urls/all', [
+            ])
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'urls' => [
+                    [
+                        'id',
+                        'url',
+                        'isActive'
+                    ]
+                ]
+            ]);
+    }
 }
