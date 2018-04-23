@@ -380,6 +380,10 @@ class UrlTest extends TestCase
                     'url'
                 ]
             ]);
+
+        $url_array = json_decode($response->getContent(), true);
+
+        return $url_array['url']['id'];
     }
 
     /**
@@ -388,7 +392,7 @@ class UrlTest extends TestCase
      * @return void
      * @depends testCreateUrlForLatestUser
      */
-    public function testGetAllUrlsWithAuthenticatedUser()
+    public function testGetAllUrlsWithAuthenticatedUser($url_id)
     {
         // get the url
         $response = $this->withHeaders([
@@ -405,6 +409,100 @@ class UrlTest extends TestCase
                         'isActive'
                     ]
                 ]
+            ]);
+    }
+
+    /**
+     * delete the last url using unauthenticated user test.
+     *
+     * @return integer
+     * @depends testCreateUrlForLatestUser
+     */
+    public function testDeleteTheLastUrlUsingUnauthenticatedUser($url_id)
+    {
+        // delete the url
+        $response = $this->json('DELETE', '/api/v1/urls?id='.$url_id, [
+            ])
+            ->assertStatus(400)
+            ->assertJson([
+                'error' => 'token_not_provided'
+            ])
+            ->assertJsonStructure([
+                'error'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * delete the last url using other user test.
+     *
+     * @return integer
+     * @depends testDeleteTheLastUrlUsingUnauthenticatedUser
+     */
+    public function testDeleteTheLastUrlUsingOtherUser($url_id)
+    {
+        // delete the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. JWTAuth::fromUser(User::all()->first()),
+            ])
+            ->json('DELETE', '/api/v1/urls?id='.$url_id, [
+            ])
+            ->assertStatus(401)
+            ->assertJson([
+                'errors' => [
+                    'Unauthorized'
+                ]
+            ])
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * delete the last url with id missing test.
+     *
+     * @return integer
+     * @depends testDeleteTheLastUrlUsingOtherUser
+     */
+    public function testDeleteUrlWithIdMissing($url_id)
+    {
+        // delete the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. JWTAuth::fromUser(User::latest()->first()),
+            ])
+            ->json('DELETE', '/api/v1/urls', [
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * delete the last url test.
+     *
+     * @return void
+     * @depends testDeleteUrlWithIdMissing
+     */
+    public function testDeleteUrl($url_id)
+    {
+        // delete the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. JWTAuth::fromUser(User::latest()->first()),
+            ])
+            ->json('DELETE', '/api/v1/urls?id='.$url_id, [
+            ])
+            ->assertStatus(200)
+            ->assertJson([
+                'message' => 'URL deleted successfully'
+            ])
+            ->assertJsonStructure([
+                'message'
             ]);
     }
 }
