@@ -505,4 +505,194 @@ class UrlTest extends TestCase
                 'message'
             ]);
     }
+
+    /**
+     * create a url for first user test.
+     *
+     * @return integer
+     */
+    public function testCreateUrlForFirstUser()
+    {
+        $user = User::all()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // creating a url for the first user
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('POST', '/api/v1/urls/', [
+                'url' => $faker->url
+            ])
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'url' => [
+                    'id',
+                    'url'
+                ]
+            ]);
+
+        $url_array = json_decode($response->getContent(), true);
+
+        return $url_array['url']['id'];
+    }
+
+    /**
+     * update a url with authentication missing test.
+     *
+     * @return integer
+     * @depends testCreateUrlForFirstUser
+     */
+    public function testUpdateUrlWithAuthenticationMissing($url_id)
+    {
+        $user = User::all()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // updating the url
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->json('PATCH', '/api/v1/urls/', [
+                'url' => $faker->url,
+                'id' => $url_id
+            ])
+            ->assertStatus(400)
+            ->assertJson([
+                'error' => 'token_not_provided'
+            ])
+            ->assertJsonStructure([
+                'error'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * update a url with missing parameters test.
+     *
+     * @return integer
+     * @depends testUpdateUrlWithAuthenticationMissing
+     */
+    public function testUpdateUrlWithParametersMissing($url_id)
+    {
+        $user = User::all()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // updating the url
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('PATCH', '/api/v1/urls/', [
+                'url' => $faker->url
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        // updating the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('PATCH', '/api/v1/urls/', [
+                'id' => $url_id
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * update a url with wrong id test.
+     *
+     * @return integer
+     * @depends testUpdateUrlWithParametersMissing
+     */
+    public function testUpdateUrlWithWrongId($url_id)
+    {
+        $user = User::all()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // updating the url
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('PATCH', '/api/v1/urls/', [
+                'url' => $faker->url,
+                'id' => -1
+            ])
+            ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * update a url with unauthorized user test.
+     *
+     * @return integer
+     * @depends testUpdateUrlWithWrongId
+     */
+    public function testUpdateUrlWithUnauthorizedUser($url_id)
+    {
+        $user = User::latest()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // updating the url
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('PATCH', '/api/v1/urls/', [
+                'url' => $faker->url,
+                'id' => $url_id
+            ])
+            ->assertStatus(401)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+
+        return $url_id;
+    }
+
+    /**
+     * update a url with authorized user test.
+     *
+     * @return void
+     * @depends testUpdateUrlWithUnauthorizedUser
+     */
+    public function testUpdateUrlWithAuthorizedUser($url_id)
+    {
+        $user = User::all()->first();
+        $token = JWTAuth::fromUser($user);
+
+        // updating the url
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('PATCH', '/api/v1/urls/', [
+                'url' => $faker->url,
+                'id' => $url_id
+            ])
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'url' => [
+                    'id',
+                    'url',
+                    'isActive'
+                ]
+            ]);
+    }
 }
