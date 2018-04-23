@@ -160,41 +160,177 @@ class UrlTest extends TestCase
      */
     public function testCreateUrlThatExistForSameUser()
     {
-        $faker = Faker::create();
-        $url = $faker->url;
+        $url = Url::latest()->first();
 
         $user = User::latest()->first();
         $token = JWTAuth::fromUser($user);
-
-        // sending the request and test status and json response
-        $response = $this->withHeaders([
-                'Authorization' => 'bearer'. $token,
-            ])
-            ->json('POST', '/api/v1/urls/', [
-                'url' => $url
-            ])
-            ->assertStatus(200)
-            ->assertJson([
-                'url' => [
-                    'id' => Url::latest()->first()->id,
-                    'url' => $url
-                ]
-            ])
-            ->assertJsonStructure([
-                'url' => [
-                    'id',
-                    'url'
-                ]
-            ]);
 
         // creating the url again for the same user
         $response = $this->withHeaders([
                 'Authorization' => 'bearer'. $token,
             ])
             ->json('POST', '/api/v1/urls/', [
-                'url' => $url
+                'url' => $url->url
             ])
             ->assertStatus(400)
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * get url with unauthenticated user test.
+     *
+     * @return void
+     */
+    public function testGetUrlWithUnauthenticatedUser()
+    {
+        $url = Url::latest()->first();
+        $token = JWTAuth::fromUser(User::latest()->first());
+
+        // get the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('GET', '/api/v1/urls?id='.$url->id)
+            ->assertStatus(200)
+            ->assertJson([
+                'url' => [
+                    'id' => $url->id,
+                    'url' => $url->url
+                ]
+            ])
+            ->assertJsonStructure([
+                'url' => [
+                    'id',
+                    'url',
+                    'isActive'
+                ]
+            ]);
+    }
+
+    /**
+     * get url with authenticated user test.
+     *
+     * @return void
+     */
+    public function testGetUrlWithAuthenticatedUser()
+    {
+        // get the url
+        $response = $this->json('GET', '/api/v1/urls?id='.Url::latest()->first()->id, [
+            ])
+            ->assertStatus(400)
+            ->assertJson([
+                'error' => 'token_not_provided'
+            ]);
+    }
+
+    /**
+     * get url that is not found test.
+     *
+     * @return void
+     */
+    public function testGetUrlThatIsNotFound()
+    {
+        $url = Url::latest()->first();
+        $token = JWTAuth::fromUser(User::latest()->first());
+
+        // get the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('GET', '/api/v1/urls?id=100000000000')
+            ->assertStatus(400)
+            ->assertJson([
+                'errors' => [
+                    'URL not found'
+                ]
+            ])
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * get url with id missing test.
+     *
+     * @return void
+     */
+    public function testGetUrlWithIdMissing()
+    {
+        $url = Url::latest()->first();
+        $token = JWTAuth::fromUser(User::latest()->first());
+
+        // get the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $token,
+            ])
+            ->json('GET', '/api/v1/urls')
+            ->assertStatus(400)
+            ->assertJson([
+                'errors' => [
+                    'The id field is required.'
+                ]
+            ])
+            ->assertJsonStructure([
+                'errors'
+            ]);
+    }
+
+    /**
+     * get url of other user test.
+     *
+     * @return integer
+     */
+    public function testGetUrlOfOtherUser()
+    {
+        $first_user = User::all()->first();
+        $first_token = JWTAuth::fromUser($first_user);
+
+        // creating a url for the first user
+        $faker = Faker::create();
+        $url = $faker->url;
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $first_token,
+            ])
+            ->json('POST', '/api/v1/urls/', [
+                'url' => $faker->url
+            ])
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'url' => [
+                    'id',
+                    'url'
+                ]
+            ]);
+        $url_array = json_decode($response->getContent(), true);
+
+        return $url_array['url']['id'];
+    }
+
+    /**
+     * get url of other user continued test.
+     *
+     * @return void
+     * @depends testGetUrlOfOtherUser
+     */
+    public function testGetUrlOfOtherUserCont($url_id)
+    {
+        // getting the url using the latest user
+        $latest_user = User::latest()->first();
+        $latest_token = JWTAuth::fromUser($latest_user);
+
+        // get the url
+        $response = $this->withHeaders([
+                'Authorization' => 'bearer'. $latest_token,
+            ])
+            ->json('GET', '/api/v1/urls?id='.$url_id)
+            ->assertStatus(401)
+            ->assertJson([
+                'errors' => [
+                    'Unauthorized'
+                ]
+            ])
             ->assertJsonStructure([
                 'errors'
             ]);
