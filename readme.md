@@ -245,6 +245,7 @@ This argument send messages to only the owner of this url in case on of the abov
 
 #### Queue messages and running the queue on the server using supervisord.
 #### Using events and listeners to listen for the change of any url status and scheduling the command using supervisord on the server.
+#### /api/v1/urls/all && /api/v1/urls/get APIs update the status of the url(s) automatically without sending an email (events and listeners)
 
 ----
 ## Further Notes:
@@ -256,8 +257,7 @@ This argument send messages to only the owner of this url in case on of the abov
 ```bash
 $ php artisan CheckStatus
 ```
-#### And it will send the email with the down time
-
+#### And it will send the email with the down time 
 
 ----
 ## Sample Email:
